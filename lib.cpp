@@ -36,7 +36,7 @@ void run()
   std::string topic = "/gazebo/default/box/link/my_contact";
 
   // Subscribe to a topic by registering a callback.
-  if (!node.Subscribe(topic, contact))
+  if (!node.Subscribe(topic, cb))
   {
     std::cerr << "Error subscribing to topic [" << topic << "]" << std::endl;
     return;
