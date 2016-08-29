@@ -33,17 +33,18 @@ void run()
   std::cout << "Start ignition" << std::endl;
 
   ignition::transport::Node node;
-  std::string topic = "/gazebo/default/box/link/my_contact";
+  std::string topic = "/foo";
 
   std::cout << "Subscribing " << std::endl;
 
   // Subscribe to a topic by registering a callback.
-  if (!node.Subscribe(topic, contact))
+  if (!node.Subscribe(topic, cb))
   {
     std::cerr << "Error subscribing to topic [" << topic << "]" << std::endl;
     return;
   }
 
+  ignition::transport::waitForShutdown();
   return;
 }
 
