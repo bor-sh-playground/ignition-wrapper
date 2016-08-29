@@ -30,13 +30,15 @@ void waitForShutdown(){
 //////////////////////////////////////////////////
 void run()
 {
-  std::cout << "Start ignition";
+  std::cout << "Start ignition" << std::endl;
 
   ignition::transport::Node node;
   std::string topic = "/gazebo/default/box/link/my_contact";
 
+  std::cout << "Subscribing " << std::endl;
+
   // Subscribe to a topic by registering a callback.
-  if (!node.Subscribe(topic, cb))
+  if (!node.Subscribe(topic, contact))
   {
     std::cerr << "Error subscribing to topic [" << topic << "]" << std::endl;
     return;
