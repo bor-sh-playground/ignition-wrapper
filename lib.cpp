@@ -6,6 +6,30 @@
 
 #include <gazebo/math/gzmath.hh>
 
+class Callback {
+
+   typedef void (*fct_ptr)();
+public:
+   Callback() : p_(NULL) {};
+   virtual ~Callback() = default;
+
+   void set_callback(fct_ptr _ptr) {
+      p_ = _ptr;
+   }
+
+   /////////////////////////////////////////////////
+   // Function is called everytime a message is received.
+   void cb(ConstWorldStatisticsPtr &_msg)
+   {
+      if ( p_ ){
+        p_();
+      }
+   }
+
+private:
+   fct_ptr p_;
+};
+
 #ifdef __cplusplus
 extern "C" {  
 #endif  
@@ -83,6 +107,26 @@ void set_pos(char* name, int x, int y, int z ) {
 
     pub->Publish(msg);
   }
+
+  // Make sure to shut everything down.
+  gazebo::client::shutdown();
+}
+
+void subscribe()
+{
+  // Load gazebo
+  gazebo::client::setup();
+
+  // Create our node for communication
+  gazebo::transport::NodePtr node(new gazebo::transport::Node());
+  node->Init();
+
+  // Listen to Gazebo world_stats topic
+  gazebo::transport::SubscriberPtr sub = node->Subscribe("~/world_stats", cb);
+
+  // Busy wait loop...replace with your own code as needed.
+  while (true)
+    gazebo::common::Time::MSleep(10);
 
   // Make sure to shut everything down.
   gazebo::client::shutdown();
