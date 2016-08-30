@@ -27,8 +27,6 @@ void pub_pos() {
   node->Init();
 
   // Publish to a Gazebo topic
-//  gazebo::transport::PublisherPtr pub =
-//    node->Advertise<gazebo::msgs::Pose>("~/pose/modify");
   gazebo::transport::PublisherPtr pub = node->Advertise<gazebo::msgs::Model>("~/model/modify");
   gazebo::msgs::Model msg;
   msg.set_name("box");
@@ -44,6 +42,41 @@ void pub_pos() {
 
     // Generate a pose
     ignition::math::Pose3d pose(4, 0, 0, 0, 0, 0);
+
+    // Convert to a pose message
+    gazebo::msgs::Set(msg.mutable_pose(), pose);
+
+    pub->Publish(msg);
+  }
+
+  // Make sure to shut everything down.
+  gazebo::client::shutdown();
+}
+
+void set_pos(char* name, int x, int y, int z ) {
+  // Load gazebo
+  gazebo::client::setup();
+
+  // Create our node for communication
+  gazebo::transport::NodePtr node(new gazebo::transport::Node());
+  node->Init();
+
+  // Publish to a Gazebo topic
+  gazebo::transport::PublisherPtr pub = node->Advertise<gazebo::msgs::Model>("~/model/modify");
+  gazebo::msgs::Model msg;
+  msg.set_name(std::string(name));
+
+  // Wait for a subscriber to connect
+  pub->WaitForConnection();
+
+  // Publisher loop...replace with your own code.
+  while (true)
+  {
+    // Throttle Publication
+    gazebo::common::Time::MSleep(100);
+
+    // Generate a pose
+    ignition::math::Pose3d pose(x, y, z, 0, 0, 0);
 
     // Convert to a pose message
     gazebo::msgs::Set(msg.mutable_pose(), pose);
