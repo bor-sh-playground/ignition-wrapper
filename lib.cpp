@@ -6,33 +6,37 @@
 
 #include <gazebo/math/gzmath.hh>
 
-class Callback {
+class Callback
+{
 
-   typedef void (*fct_ptr)();
+  typedef void (*fct_ptr)();
+
 public:
-   Callback() : p_(NULL) {};
-   virtual ~Callback() = default;
+  Callback() : p_(NULL){};
+  virtual ~Callback() = default;
 
-   void set_callback(fct_ptr _ptr) {
-      p_ = _ptr;
-   }
+  void set_callback(fct_ptr _ptr)
+  {
+    p_ = _ptr;
+  }
 
-   /////////////////////////////////////////////////
-   // Function is called everytime a message is received.
-   void cb(ConstWorldStatisticsPtr &_msg)
-   {
-      if ( p_ ){
-        p_();
-      }
-   }
+  /////////////////////////////////////////////////
+  // Function is called everytime a message is received.
+  static void cb(ConstWorldStatisticsPtr &_msg)
+  {
+    if (p_)
+    {
+      p_();
+    }
+  }
 
 private:
-   fct_ptr p_;
+  fct_ptr p_;
 };
 
 #ifdef __cplusplus
-extern "C" {  
-#endif  
+extern "C" {
+#endif
 
 /////////////////////////////////////////////////
 // Function is called everytime a message is received.
@@ -42,7 +46,8 @@ void cb(ConstWorldStatisticsPtr &_msg)
   std::cout << _msg->DebugString();
 }
 
-void pub_pos() {
+void pub_pos()
+{
   // Load gazebo
   gazebo::client::setup();
 
@@ -77,7 +82,8 @@ void pub_pos() {
   gazebo::client::shutdown();
 }
 
-void set_pos(char* name, int x, int y, int z ) {
+void set_pos(char *name, int x, int y, int z)
+{
   // Load gazebo
   gazebo::client::setup();
 
@@ -112,7 +118,7 @@ void set_pos(char* name, int x, int y, int z ) {
   gazebo::client::shutdown();
 }
 
-void subscribe()
+void subscribe(void (*fct)())
 {
   // Load gazebo
   gazebo::client::setup();
@@ -121,8 +127,11 @@ void subscribe()
   gazebo::transport::NodePtr node(new gazebo::transport::Node());
   node->Init();
 
+  Callback callbk;
+  callbk.set_callback(fct);
+
   // Listen to Gazebo world_stats topic
-  gazebo::transport::SubscriberPtr sub = node->Subscribe("~/world_stats", cb);
+  gazebo::transport::SubscriberPtr sub = node->Subscribe("~/world_stats", callbk.cb);
 
   // Busy wait loop...replace with your own code as needed.
   while (true)
@@ -153,6 +162,6 @@ void run()
   gazebo::client::shutdown();
 }
 
-#ifdef __cplusplus  
-} // extern "C"  
+#ifdef __cplusplus
+} // extern "C"
 #endif
