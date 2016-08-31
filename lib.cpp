@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <gazebo/transport/transport.hh>
+//#include <gazebo/msgs/contacts.pb.h>
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/gazebo_client.hh>
 
@@ -12,31 +13,34 @@ class Callback
   typedef void (*fct_ptr)();
 
 public:
-  Callback() : p_(NULL){};
+  Callback() : _p(NULL){};
   virtual ~Callback() = default;
 
   void set_callback(fct_ptr _ptr)
   {
-    p_ = _ptr;
+    _p = _ptr;
   }
 
   /////////////////////////////////////////////////
   // Function is called everytime a message is received.
-  static void cb(ConstWorldStatisticsPtr &_msg)
+  void cb(ConstWorldStatisticsPtr &_msg)
   {
-    if (p_)
+    if (_p)
     {
-      p_();
+      _p();
     }
   }
 
 private:
-  fct_ptr p_;
+  fct_ptr _p;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef void (*contact_cb_t)(int x, int y, int z);
+contact_cb_t contact_cb = NULL;
 
 /////////////////////////////////////////////////
 // Function is called everytime a message is received.
@@ -118,7 +122,34 @@ void set_pos(char *name, int x, int y, int z)
   gazebo::client::shutdown();
 }
 
-void subscribe(void (*fct)())
+void cb_contact(ConstContactsPtr &_msg)
+{
+  // Dump the message contents to stdout.
+  for (unsigned int i = 0; i < _msg->contact_size(); ++i)
+  {
+    std::cout << "Collision between[" << _msg->contact(i).collision1()
+              << "] and [" << _msg->contact(i).collision2() << "]\n";
+
+    for (unsigned int j = 0; j < _msg->contact(i).position_size(); ++j)
+    {
+      std::cout << j << "  Position:"
+                << _msg->contact(i).position(j).x() << " "
+                << _msg->contact(i).position(j).y() << " "
+                << _msg->contact(i).position(j).z() << "\n";
+      std::cout << "   Normal:"
+                << _msg->contact(i).normal(j).x() << " "
+                << _msg->contact(i).normal(j).y() << " "
+                << _msg->contact(i).normal(j).z() << "\n";
+      std::cout << "   Depth:" << _msg->contact(i).depth(j) << "\n";
+
+      if ( contact_cb ) {
+        contact_cb(_msg->contact(i).position(j).x(),_msg->contact(i).position(j).y(),_msg->contact(i).position(j).z());
+      }
+    }
+  }
+}
+
+void subscribe(contact_cb_t _cb, char *topic)
 {
   // Load gazebo
   gazebo::client::setup();
@@ -127,11 +158,10 @@ void subscribe(void (*fct)())
   gazebo::transport::NodePtr node(new gazebo::transport::Node());
   node->Init();
 
-  Callback callbk;
-  callbk.set_callback(fct);
+  contact_cb = _cb;
 
   // Listen to Gazebo world_stats topic
-  gazebo::transport::SubscriberPtr sub = node->Subscribe("~/world_stats", callbk.cb);
+  gazebo::transport::SubscriberPtr sub = node->Subscribe(topic, cb_contact);
 
   // Busy wait loop...replace with your own code as needed.
   while (true)
